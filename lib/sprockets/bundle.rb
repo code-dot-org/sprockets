@@ -28,8 +28,12 @@ module Sprockets
       to_load = primary_asset.metadata.delete(:to_load) || Set.new
       to_link = primary_asset.metadata.delete(:to_link) || Set.new
 
-      to_load.each do |uri|
-        loaded_asset = env.load(uri)
+      promises = to_load.map do |uri|
+        Concurrent::Promise.execute(executor: env.executor) do
+          [uri, env.load(uri)]
+        end
+      end
+      Concurrent::Promise.zip(*promises).value!.each do |uri, loaded_asset|
         dependencies.merge(loaded_asset.metadata[:dependencies])
         if to_link.include?(uri)
           primary_metadata = primary_asset.metadata

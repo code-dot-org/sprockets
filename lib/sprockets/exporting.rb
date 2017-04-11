@@ -69,5 +69,9 @@ module Sprockets
     def export_concurrent=(export_concurrent)
       self.config = config.merge(export_concurrent: export_concurrent).freeze
     end
+
+    def executor
+      @executor ||= export_concurrent ? :fast : :immediate
+    end
   end
 end

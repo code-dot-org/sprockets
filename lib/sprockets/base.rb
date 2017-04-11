@@ -78,13 +78,25 @@ module Sprockets
 
       yield asset
       stack = asset.links.to_a
-
-      while uri = stack.shift
-        yield asset = load(uri)
-        stack = asset.links.to_a + stack
+      resolve_assets(stack).each do |asset|
+        yield asset
       end
 
       nil
+    end
+
+    def resolve_assets(links)
+      return to_enum(__method__, links) unless block_given?
+
+      promises = links.map do |uri|
+        Concurrent::Promise.execute(executor: executor) do
+          yield asset = load(uri)
+          resolve_assets(asset.links.to_a).each do |linked_asset|
+            yield linked_asset
+          end
+        end
+      end
+      promises.each(&:wait!)
     end
 
     # Preferred `find_asset` shorthand.

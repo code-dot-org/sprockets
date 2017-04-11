@@ -640,4 +640,19 @@ class TestManifest < Sprockets::TestCase
     Sprockets::Manifest.new(@env, @dir).compile('logo.png', 'troll.png')
     assert_equal %w(0 1 0 1), processor.seq
   end
+
+  test 'concurrent processing bundled assets' do
+    processor = SlowProcessor.new
+    @env.register_postprocessor 'image/png', processor
+    Sprockets::Manifest.new(@env, @dir).compile('image_bundle.js')
+    assert_equal %w(0 0 1 1), processor.seq
+  end
+
+  test 'sequential processing bundled assets' do
+    @env.export_concurrent = false
+    processor = SlowProcessor.new
+    @env.register_postprocessor 'image/png', processor
+    Sprockets::Manifest.new(@env, @dir).compile('image_bundle.js')
+    assert_equal %w(0 1 0 1), processor.seq
+  end
 end

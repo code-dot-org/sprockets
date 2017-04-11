@@ -121,7 +121,7 @@ module Sprockets
 
       environment = self.environment.cached
       promises = args.flatten.map do |path|
-        Concurrent::Promise.execute(executor: executor) do
+        Concurrent::Promise.execute(executor: environment.executor) do
           environment.find_all_linked_assets(path) do |asset|
             yield asset
           end
@@ -186,7 +186,7 @@ module Sprockets
           next if exporter.skip?(logger)
 
           if promise.nil?
-            promise = Concurrent::Promise.new(executor: executor) { exporter.call }
+            promise = Concurrent::Promise.new(executor: environment.executor) { exporter.call }
             concurrent_exporters << promise.execute
           else
             concurrent_exporters << promise.then { exporter.call }
@@ -323,10 +323,6 @@ module Sprockets
           logger.level = Logger::FATAL
           logger
         end
-      end
-
-      def executor
-        @executor ||= environment.export_concurrent ? :fast : :immediate
       end
   end
 end
