@@ -134,7 +134,7 @@ module Sprockets
       environment = self.environment.cached
 
       promises = paths.map do |path|
-        Concurrent::Promise.execute(executor: executor) do
+        Concurrent::Promises.future_on(executor) do
           environment.find_all_linked_assets(path) do |asset|
             yield asset
           end
@@ -143,7 +143,7 @@ module Sprockets
 
       if filters.any?
         promises += environment.logical_paths.map do |logical_path, filename|
-          Concurrent::Promise.execute(executor: executor) do
+          Concurrent::Promises.future_on(executor) do
             if filters.any? { |f| f.call(logical_path, filename) }
               environment.find_all_linked_assets(filename) do |asset|
                 yield asset
