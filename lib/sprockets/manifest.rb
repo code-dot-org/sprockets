@@ -152,8 +152,8 @@ module Sprockets
           end
         end
       end
+      promises.each(&:wait!)
 
-      Concurrent::Promise.zip(*promises).wait!
       nil
     end
 
